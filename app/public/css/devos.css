@@ -3,14 +3,14 @@
 :root[data-theme=light]{--bg:#ffffff;--bg2:#f5f5f7;--bg3:#e8e8ed;--bd:#d2d2d7;--fg:#1d1d1f;--mut:#6e6e73;--acc:#0071e3;--ok:#248a3d;--err:#d70015;--warn:#8a6d00;--sel:#0071e322;--glass:rgba(245,245,247,.72);--ring:#0071e3;color-scheme:light}
 :root[data-theme=hc]{--bg:#000;--bg2:#0a0a0a;--bg3:#1a1a1a;--bd:#fff;--fg:#fff;--mut:#e0e0e0;--acc:#6fc3ff;--ok:#7ee787;--err:#ff7b72;--warn:#ffd33d;--sel:#6fc3ff55;--glass:#000;--ring:#ffd60a}
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI","Ubuntu",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI","Ubuntu",system-ui,sans-serif,"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji";-webkit-font-smoothing:antialiased;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
 button{background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:3px 11px;min-height:28px;cursor:pointer;transition:background .12s,border-color .12s}
 button:hover{border-color:var(--acc)}button.primary{background:var(--acc);border-color:var(--acc);color:var(--on-acc);font-weight:600}button.primary:hover{filter:brightness(1.1)}
 button.danger{background:var(--err);border-color:var(--err);color:#fff}
 input,select,textarea{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:4px 8px;min-height:28px;outline:0}
 input:focus,select:focus,textarea:focus{border-color:var(--acc)}
-code,kbd{font-family:'JetBrains Mono','DejaVu Sans Mono',monospace;background:var(--bg3);padding:1px 5px;border-radius:4px}
+code,kbd{font-family:'JetBrains Mono','DejaVu Sans Mono',monospace,'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji';background:var(--bg3);padding:1px 5px;border-radius:4px}
 .spacer{flex:1}.badge{background:var(--err);color:#fff;border-radius:9px;padding:0 6px;font-size:11px}
 #app{height:100%;display:grid;grid-template-columns:44px var(--sw,270px) 4px 1fr;grid-template-rows:40px 1fr 26px;grid-template-areas:"top top top top" "act side rv main" "st st st st"}
 #topbar{grid-area:top;display:flex;align-items:center;gap:6px;padding:0 10px;background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--bd)}

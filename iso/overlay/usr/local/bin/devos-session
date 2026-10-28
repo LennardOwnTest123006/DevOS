@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # X session: keyboard layout from kernel command line (devos.kb=de), then Openbox.
+export LC_TIME=en_US.UTF-8   # 12-hour clock with AM/PM (tint2, apps)
 kb="$(sed -n 's/.*devos\.kb=\([a-zA-Z_-]*\).*/\1/p' /proc/cmdline)"
 [ -n "$kb" ] && setxkbmap "$kb"
 xset s off -dpms 2>/dev/null

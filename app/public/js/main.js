@@ -2,17 +2,17 @@
 // Boot, menus, shortcuts, layout
 function welcome() {
   const w = $('#welcome'); w.innerHTML = '';
-  const b = (icon, t, d, fn) => h('button', { onclick: fn }, h('div', {}, t), h('small', { class: 'muted' }, d));
+  const b = (icon, t, d, fn) => h('button', { onclick: fn }, h('div', {}, icon + ' ' + t), h('small', { class: 'muted' }, d));
   w.append(h('h1', {}, h('span', { class: 'logo' }, '</>'), ' DevOS'), h('p', { class: 'muted' }, 'The operating system for developers. Pick something to start:'),
     h('div', { class: 'grid' },
-      b('', 'New project', 'Web, Node, Python, C/C++, Java, Go, Rust …', () => D.page('maker')),
-      b('', 'New file', 'Empty file in this folder', () => D.newFile()),
-      b('', 'Terminal', 'Full shell (Ctrl+`)', () => D.newTerminal()),
-      b('', 'Languages & tools', 'What is installed', () => D.page('tools')),
-      b('', 'Wi-Fi / LAN', 'Connect, share files', () => D.page('network')),
-      b('', 'USB export', 'Copy projects to a stick', () => D.page('usb')),
-      b('', 'Browser', 'Open internet browser', () => $('#btnBrowser').click()),
-      b('', 'Settings', 'Themes, fonts, editor', () => D.page('settings'))),
+      b('🛠️', 'New project', 'Web, Node, Python, C/C++, Java, Go, Rust …', () => D.page('maker')),
+      b('📄', 'New file', 'Empty file in this folder', () => D.newFile()),
+      b('⌨️', 'Terminal', 'Full shell (Ctrl+`)', () => D.newTerminal()),
+      b('🧰', 'Languages & tools', 'What is installed', () => D.page('tools')),
+      b('📶', 'Wi-Fi / LAN', 'Connect, share files', () => D.page('network')),
+      b('💾', 'USB export', 'Copy projects to a stick', () => D.page('usb')),
+      b('🌐', 'Browser', 'Open internet browser', () => $('#btnBrowser').click()),
+      b('⚙️', 'Settings', 'Themes, fonts, editor', () => D.page('settings'))),
     h('p', { class: 'muted' }, 'Shortcuts: ', h('kbd', {}, 'F5'), ' run · ', h('kbd', {}, 'Ctrl+S'), ' save · ', h('kbd', {}, 'Ctrl+`'), ' terminal · ', h('kbd', {}, 'F1'), ' editor commands · ', h('kbd', {}, 'Ctrl+Shift+F'), ' search'));
 }
 

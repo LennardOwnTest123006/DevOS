@@ -82,7 +82,7 @@ cp -a "$HERE/overlay/." "$C/"
 chmod 755 "$C"/usr/local/bin/*
 chroot "$C" env VERSION="$VERSION" bash -c '
   set -e
-  locale-gen en_US.UTF-8 de_DE.UTF-8 >/dev/null; update-locale LANG=en_US.UTF-8
+  locale-gen en_US.UTF-8 de_DE.UTF-8 >/dev/null; update-locale LANG=en_US.UTF-8 LC_TIME=en_US.UTF-8
   printf "%s\n" "kernel.apparmor_restrict_unprivileged_userns=0" "kernel.unprivileged_bpf_disabled=1" "net.ipv4.conf.all.rp_filter=1" > /etc/sysctl.d/99-devos.conf
   systemctl enable devos.service nftables.service NetworkManager.service >/dev/null
   systemctl mask apt-daily.timer apt-daily-upgrade.timer motd-news.timer >/dev/null 2>&1 || true

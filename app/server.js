@@ -54,7 +54,7 @@ const hostOk = (req) => {
 // ---- settings ---------------------------------------------------------------------------
 const SETTINGS_FILE = path.join(DATA, 'settings.json');
 const DEFAULTS = {
-  theme: 'system', fontSize: 14, fontFamily: "'JetBrains Mono','Fira Code','DejaVu Sans Mono',monospace",
+  theme: 'system', fontSize: 14, fontFamily: "'JetBrains Mono','Fira Code','DejaVu Sans Mono',monospace,'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji'",
   tabSize: 4, insertSpaces: true, wordWrap: 'off', minimap: true, ligatures: false, lineNumbers: 'on',
   autosave: 'afterDelay', autosaveDelay: 1200, checkOnType: true, checkDelay: 600, formatOnSave: false,
   termFontSize: 13, home: os.homedir(), runners: {}, customLanguages: [], sidebarWidth: 270, panelHeight: 280,

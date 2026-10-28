@@ -18,7 +18,7 @@ const PAGES = {
   // ---------------------------------------------------------------------------- Custom Maker
   async maker(box) {
     const { templates } = await GET('/api/maker/templates');
-    box.append(h('h2', {}, 'Custom Maker'), h('p', { class: 'muted' }, 'Create projects from templates, save your own templates and define your own languages / run commands.'));
+    box.append(h('h2', {}, '🛠️ Custom Maker'), h('p', { class: 'muted' }, 'Create projects from templates, save your own templates and define your own languages / run commands.'));
     box.append(h('h3', {}, 'New project'));
     const name = h('input', { value: 'my-project', style: 'width:220px' });
     const parent = h('input', { value: D.cwd, style: 'width:340px' });
@@ -56,7 +56,7 @@ const PAGES = {
   // ---------------------------------------------------------------------------- Network
   async network(box, arg) {
     const n = await GET('/api/net');
-    box.append(h('h2', {}, 'Network, Wi-Fi & sharing'));
+    box.append(h('h2', {}, '📶 Network, Wi-Fi & sharing'));
     box.append(h('h3', {}, 'This computer'), h('table', { class: 't' }, ...n.lan.map((a) => h('tr', {}, h('td', {}, a.iface), h('td', {}, a.address)))), n.lan.length ? '' : h('p', { class: 'warn' }, 'No network connection yet.'));
     box.append(h('h3', {}, 'Wi-Fi'));
     if (!n.available) box.append(h('p', { class: 'muted' }, 'NetworkManager (nmcli) is not available here. Inside the DevOS ISO this lists Wi-Fi networks.'));
@@ -78,7 +78,7 @@ const PAGES = {
   // ---------------------------------------------------------------------------- USB
   async usb(box, arg) {
     const r = await GET('/api/usb/list');
-    box.append(h('h2', {}, 'USB sticks & export'), h('p', { class: 'muted' }, 'Copy a project or folder to a USB stick as a .tar.gz archive (works on Linux, macOS and Windows 10/11), then eject safely.'));
+    box.append(h('h2', {}, '💾 USB sticks & export'), h('p', { class: 'muted' }, 'Copy a project or folder to a USB stick as a .tar.gz archive (works on Linux, macOS and Windows 10/11), then eject safely.'));
     const src = h('input', { value: arg.src || D.cwd, style: 'width:100%' });
     box.append(h('div', { class: 'form' }, ...field('Folder / file to export', src)));
     if (r.error) box.append(h('p', { class: 'warn' }, r.error));
@@ -96,7 +96,7 @@ const PAGES = {
   // ---------------------------------------------------------------------------- Tools
   async tools(box) {
     const info = await GET('/api/info');
-    box.append(h('h2', {}, 'Languages & tools'), h('p', { class: 'muted' }, 'Everything detected on this machine. Missing something? Open the terminal and install it, e.g. sudo apt install kotlin dotnet-sdk-8.0 …'));
+    box.append(h('h2', {}, '🧰 Languages & tools'), h('p', { class: 'muted' }, 'Everything detected on this machine. Missing something? Open the terminal and install it, e.g. sudo apt install kotlin dotnet-sdk-8.0 …'));
     const t = h('table', { class: 't' }, h('tr', {}, h('th', {}, 'Tool'), h('th', {}, 'Status'), h('th', {}, 'Version')));
     info.tools.forEach((x) => t.append(h('tr', {}, h('td', {}, x.bin), h('td', { class: x.installed ? 'ok' : 'bad' }, x.installed ? '✔ installed' : '✖ missing'), h('td', { class: 'muted' }, x.version || ''))));
     box.append(t, h('h3', {}, 'Supported file types (colours + runner)'), h('div', { class: 'cards' }, ...D.langs.map((l) => h('div', { class: 'card' }, h('b', {}, l.name), h('div', { class: 'muted' }, '.' + l.exts.join(' .')), h('div', {}, l.run ? '▶ run' : '', l.hasChecker ? ' · red underline' : '')))));
@@ -105,7 +105,7 @@ const PAGES = {
   // ---------------------------------------------------------------------------- Settings
   async settings(box) {
     const s = D.settings; const info = await GET('/api/info');
-    box.append(h('h2', {}, 'Settings'), h('p', { class: 'muted' }, 'Changes apply instantly and are saved in ' + info.data + '/settings.json'));
+    box.append(h('h2', {}, '⚙️ Settings'), h('p', { class: 'muted' }, 'Changes apply instantly and are saved in ' + info.data + '/settings.json'));
     const num = (k, min, max) => h('input', { type: 'number', min, max, value: s[k], oninput: (e) => setting(k, +e.target.value) });
     const chk = (k) => h('input', { type: 'checkbox', checked: !!s[k], onchange: (e) => setting(k, e.target.checked) });
     box.append(h('h3', {}, 'Appearance'), h('div', { class: 'form' },
