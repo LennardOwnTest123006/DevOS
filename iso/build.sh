@@ -4,7 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 HERE="$PWD"; REPO="$(dirname "$HERE")"
-WORK="${WORK:-/var/tmp/devos-build}"
+PROFILE="${PROFILE:-full}"          # full | lite (small, for virtual machines)
+if [ "$PROFILE" = lite ]; then WORK="${WORK:-/var/tmp/devos-build-lite}"; PKGS=packages-lite.txt; SUFFIX="-lite"; else WORK="${WORK:-/var/tmp/devos-build}"; PKGS=packages.txt; SUFFIX=""; fi
 OUT="${OUT:-$REPO/dist}"
 VERSION="${DEVOS_VERSION:-1.0}"
 MIRROR="${MIRROR:-http://archive.ubuntu.com/ubuntu}"
@@ -48,7 +49,7 @@ APT
 rm -f "${C:?}"/etc/apt/sources.list.d/* 2>/dev/null || true
 echo devos > "$C/etc/hostname"
 printf '#!/bin/sh\nexit 101\n' > "$C/usr/sbin/policy-rc.d"; chmod +x "$C/usr/sbin/policy-rc.d"   # no daemons started while building
-cp "$HERE/packages.txt" "$C/tmp/packages.txt"
+cp "$HERE/$PKGS" "$C/tmp/packages.txt"
 
 log "Install packages (this is the long step)"
 cat > "$C/tmp/stage1.sh" <<'IN'
@@ -58,9 +59,10 @@ apt-get update
 apt-get install -y --no-install-recommends casper initramfs-tools
 sed -i 's/^MODULES=.*/MODULES=most/' /etc/initramfs-tools/initramfs.conf
 grep -v '^\s*#' /tmp/packages.txt | grep -v '^\s*$' | xargs apt-get install -y --no-install-recommends
-apt-get install -y --no-install-recommends linux-image-generic linux-firmware
+apt-get install -y --no-install-recommends linux-image-generic
+[ "$1" = lite ] || apt-get install -y --no-install-recommends linux-firmware
 IN
-chroot "$C" bash /tmp/stage1.sh
+chroot "$C" bash /tmp/stage1.sh "$PROFILE"
 
 log "Node.js 22 LTS (official build from nodejs.org, checksum verified) + typescript, tsx"
 NODE_BASE="https://nodejs.org/dist/latest-v22.x"
@@ -68,7 +70,7 @@ NODE_TAR="$(curl -fsSL "$NODE_BASE/SHASUMS256.txt" | awk '/linux-x64.tar.xz$/{pr
 curl -fsSL "$NODE_BASE/SHASUMS256.txt" | grep " $NODE_TAR\$" > "$WORK/node.sha"
 [ -f "$WORK/$NODE_TAR" ] || curl -fsSL -o "$WORK/$NODE_TAR" "$NODE_BASE/$NODE_TAR"
 (cd "$WORK" && sha256sum -c node.sha)
-tar -xJf "$WORK/$NODE_TAR" -C "$C/usr/local" --strip-components=1 --exclude='*/CHANGELOG.md' --exclude='*/README.md' --exclude='*/LICENSE'
+tar -xJf "$WORK/$NODE_TAR" -C "$C/usr/local" --strip-components=1 --exclude='*/include' --exclude='*/share' --exclude='*/CHANGELOG.md' --exclude='*/README.md' --exclude='*/LICENSE'
 NPMG="$WORK/npm-global"; rm -rf "${NPMG:?}"; mkdir -p "$NPMG"
 npm install -g --prefix "$NPMG" --no-audit --no-fund typescript tsx          # on the host (pure JS + esbuild binary)
 cp -a "$NPMG/lib/node_modules/." "$C/usr/local/lib/node_modules/"
@@ -80,7 +82,7 @@ rm -rf "${C:?}/opt/devos"; mkdir -p "$C/opt/devos"
 tar -C "$REPO/app" --exclude=node_modules --exclude='*.devos-tmp-*' -cf - . | tar -C "$C/opt/devos" -xf -
 cp -a "$HERE/overlay/." "$C/"
 chmod 755 "$C"/usr/local/bin/*
-chroot "$C" env VERSION="$VERSION" bash -c '
+chroot "$C" env VERSION="$VERSION" PROFILE="$PROFILE" bash -c '
   set -e
   locale-gen en_US.UTF-8 de_DE.UTF-8 >/dev/null; update-locale LANG=en_US.UTF-8 LC_TIME=en_US.UTF-8
   printf "%s\n" "kernel.apparmor_restrict_unprivileged_userns=0" "kernel.unprivileged_bpf_disabled=1" "net.ipv4.conf.all.rp_filter=1" > /etc/sysctl.d/99-devos.conf
@@ -88,6 +90,14 @@ chroot "$C" env VERSION="$VERSION" bash -c '
   systemctl mask apt-daily.timer apt-daily-upgrade.timer motd-news.timer >/dev/null 2>&1 || true
   echo "DevOS $VERSION" > /etc/devos-release
   sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"DevOS $VERSION (Ubuntu 24.04 base)\"/" /etc/os-release
+  if [ "$PROFILE" = lite ]; then
+    sed -i "s/^COMPRESS=.*/COMPRESS=xz/" /etc/initramfs-tools/initramfs.conf
+    for k in /lib/modules/*; do
+      for d in sound drivers/media drivers/infiniband drivers/net/wireless drivers/staging drivers/iio net/bluetooth drivers/bluetooth drivers/gpu/drm/amd drivers/gpu/drm/nouveau drivers/gpu/drm/radeon drivers/gpu/drm/i915 drivers/gpu/drm/xe drivers/gpu/drm/msm drivers/isdn drivers/mtd drivers/usb/serial drivers/net/can net/mac80211 net/wireless drivers/comedi drivers/video/fbdev/nvidia; do rm -rf "$k/kernel/$d"; done
+      depmod -a "$(basename "$k")"
+    done
+    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian /usr/share/locale/[a-df-z]* /usr/share/locale/e[a-mo-z]* /var/lib/apt/lists/* /usr/lib/firmware
+  fi
   update-initramfs -c -k all
 '
 
@@ -141,7 +151,7 @@ mkdir -p "$ISO/EFI/ubuntu" "$ISO/EFI/boot"; cp "$WORK/efi-grub.cfg" "$ISO/EFI/ub
 cp "$EFI" "$ISO/boot/grub/efi.img"
 
 log "xorriso -> DevOS.iso"
-ISOFILE="$OUT/DevOS-$VERSION-amd64.iso"; rm -f "$ISOFILE"
+ISOFILE="$OUT/DevOS-$VERSION$SUFFIX-amd64.iso"; rm -f "$ISOFILE"
 xorriso -as mkisofs -iso-level 3 -full-iso9660-filenames -joliet-long -r -V "DEVOS" \
   -o "$ISOFILE" \
   --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img -partition_offset 16 --mbr-force-bootable \
@@ -150,5 +160,5 @@ xorriso -as mkisofs -iso-level 3 -full-iso9660-filenames -joliet-long -r -V "DEV
   -c boot/boot.catalog -b boot/grub/i386-pc/eltorito.img -no-emul-boot -boot-load-size 4 -boot-info-table --grub2-boot-info \
   -eltorito-alt-boot -e '--interval:appended_partition_2:::' -no-emul-boot \
   "$ISO"
-( cd "$OUT" && sha256sum "$(basename "$ISOFILE")" > "$(basename "$ISOFILE").sha256" && ln -sf "$(basename "$ISOFILE")" DevOS.iso && ln -sf "$(basename "$ISOFILE").sha256" DevOS.iso.sha256 )
+( cd "$OUT" && sha256sum "$(basename "$ISOFILE")" > "$(basename "$ISOFILE").sha256" && ln -sf "$(basename "$ISOFILE")" "DevOS$SUFFIX.iso" )
 log "DONE: $ISOFILE ($(du -h "$ISOFILE" | cut -f1))"; cat "$OUT/$(basename "$ISOFILE").sha256"

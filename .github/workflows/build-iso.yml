@@ -1,31 +1,39 @@
 name: Build DevOS ISO
+# Click "Run workflow" (Actions tab) -> after ~60 min the ISO is on the Releases page as one downloadable file.
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        default: 'v1.0'
   push:
     tags: ['v*']
+permissions:
+  contents: write
 jobs:
   iso:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - name: Free disk space
-        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android && df -h /
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
+          df -h /
       - name: Build ISO
-        run: sudo env PATH="$PATH" ./iso/build.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: DevOS-iso
-          path: |
-            dist/DevOS-*.iso
-            dist/DevOS-*.iso.sha256
-          compression-level: 0
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/')
+        run: sudo env "PATH=$PATH" ./iso/build.sh
+      - name: Checksum
+        run: cd dist && ls -la && cat DevOS-*.sha256
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: DevOS ${{ github.event.inputs.tag || github.ref_name }}
+          body: |
+            Download **DevOS-1.0-amd64.iso** (full edition: all languages + hardware firmware).
+            Verify with the `.sha256` file. Boot in VirtualBox (Linux 64-bit, 4 GB RAM) or write to a USB stick (Rufus: DD Image mode). See README.
           files: |
-            dist/DevOS-*.iso
-            dist/DevOS-*.iso.sha256
+            dist/DevOS-1.0-amd64.iso
+            dist/DevOS-1.0-amd64.iso.sha256
