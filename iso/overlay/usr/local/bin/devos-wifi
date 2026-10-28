@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -e
+nmcli device wifi rescan 2>/dev/null || true
+nmcli -f IN-USE,SSID,SIGNAL,SECURITY device wifi list
+read -rp "SSID: " ssid
+read -rsp "Password (empty = open network): " pw; echo
+if [ -n "$pw" ]; then nmcli device wifi connect "$ssid" password "$pw"; else nmcli device wifi connect "$ssid"; fi

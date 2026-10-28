@@ -1,0 +1,64 @@
+#!/usr/bin/python3
+"""DevOS window: shows the DevOS IDE in a WebKit view (same engine as GNOME Web / Safari).
+External links open in the normal browser (devos-browser); downloads go to ~/Downloads."""
+import os, subprocess, sys, time, urllib.request
+os.environ.setdefault("WEBKIT_DISABLE_COMPOSITING_MODE", "1")      # stable in VMs / software GL
+os.environ.setdefault("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
+import gi
+gi.require_version("Gtk", "3.0")
+gi.require_version("WebKit2", "4.1")
+from gi.repository import Gtk, WebKit2, GLib
+
+port = os.environ.get("DEVOS_PORT", "7777")
+data = os.environ.get("DEVOS_DATA", os.path.expanduser("~/.devos"))
+base = f"http://127.0.0.1:{port}"
+for _ in range(120):
+    try:
+        urllib.request.urlopen(base + "/login.html", timeout=1)
+        break
+    except Exception:
+        time.sleep(0.5)
+try:
+    token = open(os.path.join(data, "token")).read().strip()
+except OSError:
+    token = ""
+
+def external(uri):
+    subprocess.Popen(["devos-browser", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+win = Gtk.Window(title="DevOS")
+win.set_wmclass("devos-app", "devos-app")
+win.set_default_size(1280, 800)
+ctx = WebKit2.WebContext.get_default()
+view = WebKit2.WebView.new_with_context(ctx)
+s = view.get_settings()
+s.set_enable_developer_extras(True)
+s.set_enable_javascript(True)
+s.set_javascript_can_access_clipboard(True)
+s.set_enable_write_console_messages_to_stdout(False)
+
+def on_policy(v, decision, dtype):
+    if dtype in (WebKit2.PolicyDecisionType.NAVIGATION_ACTION, WebKit2.PolicyDecisionType.NEW_WINDOW_ACTION):
+        uri = decision.get_navigation_action().get_request().get_uri()
+        if not (uri.startswith(base) or uri.startswith("about:") or uri.startswith("data:") or uri.startswith("blob:")):
+            external(uri)
+            decision.ignore()
+            return True
+    return False
+
+def on_download(c, dl):
+    d = os.path.expanduser("~/Downloads")
+    os.makedirs(d, exist_ok=True)
+    def dest(download, name):
+        download.set_destination("file://" + os.path.join(d, name or "download"))
+        return True
+    dl.connect("decide-destination", dest)
+
+view.connect("decide-policy", on_policy)
+ctx.connect("download-started", on_download)
+win.add(view)
+win.connect("destroy", Gtk.main_quit)
+win.maximize()
+win.show_all()
+view.load_uri(f"{base}/?t={token}")
+Gtk.main()

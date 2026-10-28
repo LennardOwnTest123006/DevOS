@@ -1,0 +1,2 @@
+# Live session only: the "dev" user has passwordless sudo (like Ubuntu live media).
+dev ALL=(ALL) NOPASSWD:ALL

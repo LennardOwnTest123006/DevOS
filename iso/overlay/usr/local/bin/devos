@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# devos - control the DevOS server
+#   devos            print the URL (with token) and open it
+#   devos url|token|lan|status|restart|stop|start|help
+set -u
+DATA="${DEVOS_DATA:-$HOME/.devos}"
+PORT="${DEVOS_PORT:-7777}"
+APP="${DEVOS_APP:-/opt/devos}"
+token() { cat "$DATA/token" 2>/dev/null; }
+url()   { echo "http://127.0.0.1:$PORT/?t=$(token)"; }
+case "${1:-open}" in
+  url)    url ;;
+  token)  token ;;
+  lan)    echo "Start in network mode (anyone with the token gets a shell - trusted networks only):"
+          echo "  DEVOS_HOST=0.0.0.0 devos start"
+          hostname -I 2>/dev/null | tr ' ' '\n' | grep . | sed "s|^|  http://|; s|\$|:$PORT/?t=$(token)|" ;;
+  status) curl -fsS -o /dev/null "http://127.0.0.1:$PORT/login.html" && echo "DevOS running on :$PORT" || { echo "DevOS not running"; exit 1; } ;;
+  start)  exec node "$APP/server.js" ;;
+  restart) sudo systemctl restart devos 2>/dev/null || { echo "not a service here - run: devos start"; exit 1; } ;;
+  stop)   sudo systemctl stop devos ;;
+  open)   echo "$(url)"; command -v devos-app >/dev/null && exec devos-app || xdg-open "$(url)" ;;
+  *)      sed -n '2,3p' "$0" ;;
+esac

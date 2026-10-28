@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# devos-share DIR [PORT]  - read-only HTTP share for 30 minutes, reachable from private LAN addresses only
+DIR="${1:-.}"; PORT="${2:-8080}"
+echo "Sharing $(realpath "$DIR") on:"; hostname -I | tr ' ' '\n' | grep . | sed "s|^|  http://|; s|\$|:$PORT/|"
+echo "Stops after 30 minutes or Ctrl+C."
+exec timeout 1800 python3 -I -m http.server "$PORT" --bind 0.0.0.0 --directory "$DIR"

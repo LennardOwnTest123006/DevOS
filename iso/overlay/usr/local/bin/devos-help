@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+cat <<'TXT'
+DevOS commands
+  devos                    open the IDE            devos url / token / lan / status
+  devos-browser [url]      open-source web browser
+  devos-terminal           extra terminal window
+  devos-info               system + toolchain summary
+  devos-usb list           show USB sticks
+  devos-usb flash ISO DEV  write an ISO to a USB stick (asks for confirmation)
+  devos-usb verify ISO DEV compare the stick with the ISO
+  devos-usb export DIR     copy a folder to a USB stick (.tar.gz)
+  devos-menu firmware      reboot into UEFI/BIOS boot menu (go back to Windows/Linux)
+  devos-menu reboot|poweroff
+  devos-wifi               connect to Wi-Fi (interactive)
+  devos-share DIR [port]   share a folder to the LAN (read-only, 30 min)
+  devos-install-lang NAME  install an extra language (kotlin, dotnet, swift-dep, r, julia, zig ...)
+Install anything else:     sudo apt update && sudo apt install <package>
+TXT

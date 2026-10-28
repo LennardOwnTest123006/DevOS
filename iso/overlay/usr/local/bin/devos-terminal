@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec xterm -fa 'DejaVu Sans Mono' -fs 11 -bg '#1c1c1e' -fg '#f5f5f7' -title Terminal "$@"

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# X session: keyboard layout from kernel command line (devos.kb=de), then Openbox.
+kb="$(sed -n 's/.*devos\.kb=\([a-zA-Z_-]*\).*/\1/p' /proc/cmdline)"
+[ -n "$kb" ] && setxkbmap "$kb"
+xset s off -dpms 2>/dev/null
+exec openbox-session

@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>DevOS - locked</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/css/devos.css"></head>
+<body class="login"><form onsubmit="location.href='/?t='+encodeURIComponent(this.t.value);return false" class="card">
+<h1>&lt;/&gt; DevOS</h1>
+<p>This DevOS session is protected, because the terminal gives full access to the machine.</p>
+<p>Open the link printed by <code>devos</code> / <code>node server.js</code>, or paste the token from <code>~/.devos/token</code>:</p>
+<input name="t" type="password" placeholder="access token" autofocus required><button>Unlock</button></form></body></html>

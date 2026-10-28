@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+case "${1:-}" in
+  poweroff) sudo systemctl poweroff ;;
+  reboot)   sudo systemctl reboot ;;
+  firmware) sudo systemctl reboot --firmware-setup ;;   # UEFI setup / boot menu -> pick Windows or your Linux disk
+  *) echo "usage: devos-menu poweroff|reboot|firmware" ;;
+esac
