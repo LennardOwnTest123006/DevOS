@@ -6,7 +6,7 @@ const os = require('os');
 const path = require('path');
 
 const run = (cmd, args, opts = {}) => new Promise((resolve) => {
-  cp.execFile(cmd, args, { timeout: opts.timeout || 30000, maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) =>
+  cp.execFile(cmd, args, { timeout: opts.timeout || 30000, maxBuffer: 8 * 1024 * 1024, env: opts.env || process.env }, (err, stdout, stderr) =>
     resolve({ ok: !err, code: err ? err.code : 0, stdout, stderr: stderr || (err && err.message) || '' }));
 });
 

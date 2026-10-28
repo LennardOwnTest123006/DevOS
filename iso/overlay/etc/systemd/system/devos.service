@@ -5,7 +5,7 @@ After=network.target systemd-user-sessions.service
 [Service]
 User=dev
 Environment=DEVOS_LIVE=1 DEVOS_HOST=127.0.0.1 DEVOS_PORT=7777 HOME=/home/dev
-ExecStart=/usr/bin/node /opt/devos/server.js
+ExecStart=/usr/local/bin/node /opt/devos/server.js
 Restart=on-failure
 RestartSec=2
 # hardening: the server cannot gain privileges, but sudo for the dev user still works through the helper

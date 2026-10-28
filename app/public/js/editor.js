@@ -89,7 +89,7 @@ D.save = async (t = D.active) => {
     const content = t.model.getValue();
     await PUT('/api/fs/write', { path: t.path, content });
     t.saved = content; t.dirty = false; renderTabs();
-    $('#stSave').textContent = 'saved ' + new Date().toLocaleTimeString();
+    $('#stSave').textContent = 'saved ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     if (!$('#previewWrap').hidden && D.previewPath) D.reloadPreview();
   } catch (e) { fail(e); }
 };

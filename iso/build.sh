@@ -69,7 +69,11 @@ curl -fsSL "$NODE_BASE/SHASUMS256.txt" | grep " $NODE_TAR\$" > "$WORK/node.sha"
 [ -f "$WORK/$NODE_TAR" ] || curl -fsSL -o "$WORK/$NODE_TAR" "$NODE_BASE/$NODE_TAR"
 (cd "$WORK" && sha256sum -c node.sha)
 tar -xJf "$WORK/$NODE_TAR" -C "$C/usr/local" --strip-components=1 --exclude='*/CHANGELOG.md' --exclude='*/README.md' --exclude='*/LICENSE'
-chroot "$C" bash -c 'node --version && npm install -g --no-audit --no-fund typescript tsx 2>&1 | tail -2'
+NPMG="$WORK/npm-global"; rm -rf "${NPMG:?}"; mkdir -p "$NPMG"
+npm install -g --prefix "$NPMG" --no-audit --no-fund typescript tsx          # on the host (pure JS + esbuild binary)
+cp -a "$NPMG/lib/node_modules/." "$C/usr/local/lib/node_modules/"
+for b in tsc tsx; do ln -sf "../lib/node_modules/$( [ $b = tsx ] && echo tsx/dist/cli.mjs || echo typescript/bin/$b )" "$C/usr/local/bin/$b"; done
+chroot "$C" bash -c 'node --version && tsc --version && tsx --version | head -1'
 
 log "Install DevOS app + overlay"
 rm -rf "${C:?}/opt/devos"; mkdir -p "$C/opt/devos"
@@ -102,11 +106,16 @@ chroot "$C" dpkg-query -W --showformat='${Package} ${Version}\n' > "$ISO/casper/
 echo "DevOS $VERSION - Ubuntu 24.04 base amd64" > "$ISO/.disk/info"
 touch "$ISO/.disk/base_installable"
 cp "$HERE/grub/grub.cfg" "$ISO/boot/grub/grub.cfg"
+mkdir -p "$ISO/boot/grub/fonts"; cp /usr/share/grub/unicode.pf2 "$ISO/boot/grub/fonts/unicode.pf2"
 
 log "SquashFS - slow but small"
 if [ "$XZ_LEVEL" = xz ]; then COMP=(-comp xz -b 1M -Xbcj x86); else COMP=(-comp ${XZ_LEVEL}); fi
-mksquashfs "$C" "$ISO/casper/filesystem.squashfs" -noappend "${COMP[@]}" -wildcards \
-  -e 'boot/vmlinuz*' -e 'boot/initrd.img*' -e proc/* -e sys/* -e dev/* -e run/* -e tmp/* 2>&1 | tail -3
+SQ="$WORK/filesystem.squashfs"
+if [ "${REUSE_SQUASH:-0}" = 1 ] && [ -f "$SQ" ]; then echo "reusing $SQ"; else
+  mksquashfs "$C" "$SQ" -noappend "${COMP[@]}" -wildcards \
+    -e 'boot/vmlinuz*' -e 'boot/initrd.img*' -e proc/* -e sys/* -e dev/* -e run/* -e tmp/* 2>&1 | tail -3
+fi
+cp "$SQ" "$ISO/casper/filesystem.squashfs"
 printf '%s' "$(du -sx --block-size=1 "$C" | cut -f1)" > "$ISO/casper/filesystem.size"
 
 log "Boot loaders (BIOS + UEFI/Secure Boot)"
@@ -115,7 +124,7 @@ grub-mkimage -O i386-pc -o "$WORK/core.img" -p /boot/grub biosdisk iso9660 part_
 cat /usr/lib/grub/i386-pc/cdboot.img "$WORK/core.img" > "$ISO/boot/grub/i386-pc/eltorito.img"
 # EFI system partition image: signed shim -> signed grub -> finds the ISO and loads /boot/grub/grub.cfg
 EFI="$WORK/efi.img"; rm -f "$EFI"; truncate -s 8M "$EFI"; mkfs.vfat -n DEVOS_EFI "$EFI" >/dev/null
-mmd -i "$EFI" ::EFI ::EFI/boot ::boot ::boot/grub
+mmd -i "$EFI" ::EFI ::EFI/boot ::EFI/ubuntu ::boot ::boot/grub
 mcopy -i "$EFI" /usr/lib/shim/shimx64.efi.signed.latest ::EFI/boot/BOOTx64.EFI
 mcopy -i "$EFI" /usr/lib/shim/mmx64.efi ::EFI/boot/mmx64.efi
 mcopy -i "$EFI" /usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed ::EFI/boot/grubx64.efi
@@ -126,6 +135,9 @@ configfile ($root)/boot/grub/grub.cfg
 CFG
 mcopy -i "$EFI" "$WORK/efi-grub.cfg" ::boot/grub/grub.cfg
 mcopy -i "$EFI" "$WORK/efi-grub.cfg" ::EFI/boot/grub.cfg
+mcopy -i "$EFI" "$WORK/efi-grub.cfg" ::EFI/ubuntu/grub.cfg
+# Ubuntu's signed GRUB looks for (boot device)/EFI/ubuntu/grub.cfg - also provide it on the ISO filesystem itself
+mkdir -p "$ISO/EFI/ubuntu" "$ISO/EFI/boot"; cp "$WORK/efi-grub.cfg" "$ISO/EFI/ubuntu/grub.cfg"; cp "$WORK/efi-grub.cfg" "$ISO/EFI/boot/grub.cfg"
 cp "$EFI" "$ISO/boot/grub/efi.img"
 
 log "xorriso -> DevOS.iso"

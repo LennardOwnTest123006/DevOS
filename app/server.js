@@ -22,6 +22,7 @@ const DATA = process.env.DEVOS_DATA || path.join(os.homedir(), '.devos');
 const PUBLIC = path.join(__dirname, 'public');
 const LIVE = process.env.DEVOS_LIVE === '1';
 fs.mkdirSync(DATA, { recursive: true, mode: 0o700 });
+try { fs.chmodSync(DATA, 0o700); } catch (_) { /* not ours */ }
 process.env.DEVOS_DATA = DATA;
 
 // ---- access token: terminal = shell access, so every request must carry it -------------
@@ -192,6 +193,13 @@ const api = {
   'POST /api/share/stop': async (req) => ({ shares: sys.shareStop((await readJson(req)).port) }),
 
   'POST /api/browser/open': async (req) => { sys.openExternal((await readJson(req)).url); return { ok: true }; },
+  'POST /api/keyboard': async (req) => {
+    const b = await readJson(req);
+    if (!/^[a-z]{2,3}$/.test(b.layout) || !/^[a-z0-9_-]{0,20}$/.test(b.variant || '')) throw new Error('Invalid layout');
+    const r = await sys.run('setxkbmap', [b.layout, ...(b.variant ? ['-variant', b.variant] : [])], { env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0' } });
+    if (!r.ok) throw new Error('Keyboard layout can only be changed inside the DevOS graphical session');
+    return { ok: true };
+  },
   'POST /api/power': async (req) => { if (!LIVE) throw new Error('Power control is only available inside the DevOS live system'); await sys.power((await readJson(req)).action); return { ok: true }; },
 };
 
