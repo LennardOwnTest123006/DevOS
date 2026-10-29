@@ -168,6 +168,6 @@ D.run = async () => {
   let cmd = D.runCommand(t), cwd = dirOf(t.path);
   if (proj.run && !t.runAs && !(D.settings.runners || {})[(langByExt(t.path) || {}).id]) { cmd = proj.run; cwd = proj.dir; }
   if (!cmd) return toast('No run command for this file type. Add one in Custom Maker → Run profiles.', 'err', 6000);
-  if (cmd.startsWith('@preview')) { const target = cmd.split(' ')[1]; return D.preview(target ? join(cwd, target) : t.path); }
+  if (cmd.startsWith('@preview')) { const target = cmd.split(' ')[1]; return D.openInBrowser(target ? join(cwd, target) : t.path); }
   D.runInTerminal(cmd, cwd);
 };

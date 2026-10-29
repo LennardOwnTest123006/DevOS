@@ -2,7 +2,7 @@
 # JS/TS, Python, C/C++, Lua, Shell, SQL included; add Java/Go/Rust/PHP/Ruby with: devos-install-lang or sudo apt install
 systemd systemd-sysv dbus dbus-x11 dbus-user-session dbus-bin udev kmod sudo less nano bash-completion
 locales tzdata keyboard-configuration console-setup kbd polkitd pkexec iproute2 iputils-ping isc-dhcp-client nftables ca-certificates
-network-manager udisks2 dosfstools e2fsprogs parted procps psmisc pv usbutils
+systemd-resolved dconf-gsettings-backend network-manager udisks2 dosfstools e2fsprogs parted procps psmisc pv usbutils
 xserver-xorg-core xserver-xorg-input-libinput xserver-xorg-video-vmware xserver-xorg-video-fbdev xserver-xorg-video-vesa x11-xserver-utils x11-xkb-utils xinit
 openbox tint2 xterm xdg-utils libgl1-mesa-dri fonts-inter fonts-jetbrains-mono fonts-dejavu-core fonts-noto-color-emoji adwaita-icon-theme
 gir1.2-webkit2-4.1 gir1.2-gtk-3.0 python3-gi epiphany-browser

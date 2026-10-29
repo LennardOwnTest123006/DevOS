@@ -85,3 +85,13 @@ body.login{display:flex;align-items:center;justify-content:center}.login .card{w
 @media (prefers-contrast:more){:root{--bd:var(--mut)}button,input,select{border-width:2px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 [hidden]{display:none!important}
+
+/* always-visible scrollbars (VMs / touchpads hide overlay scrollbars) */
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-thumb{background:var(--mut);border-radius:6px;border:3px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--acc)}
+::-webkit-scrollbar-track{background:var(--bg2)}
+#pageWrap{overflow-y:scroll}
+#page{padding-bottom:80px}
+.pickrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.pickrow select{min-width:300px}

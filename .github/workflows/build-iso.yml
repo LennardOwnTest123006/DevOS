@@ -5,7 +5,7 @@ on:
     inputs:
       tag:
         description: 'Release tag'
-        default: 'v1.0'
+        default: "v1.1"
   push:
     tags: ['v*']
     branches: ['ccr-07fe7d29-p76txo']
@@ -25,17 +25,17 @@ jobs:
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
           df -h /
       - name: Build ISO
-        run: sudo env "PATH=$PATH" ./iso/build.sh
+        run: sudo env "PATH=$PATH" DEVOS_VERSION=1.1 ./iso/build.sh
       - name: Checksum
         run: cd dist && ls -la && cat DevOS-*.sha256
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'v1.0' }}
-          name: DevOS ${{ github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'v1.0' }}
+          tag_name: ${{ github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'v1.1' }}
+          name: DevOS ${{ github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'v1.1' }}
           body: |
-            Download **DevOS-1.0-amd64.iso** (full edition: all languages + hardware firmware).
+            Download **DevOS-1.1-amd64.iso** (full edition: all languages + hardware firmware).
             Verify with the `.sha256` file. Boot in VirtualBox (Linux 64-bit, 4 GB RAM) or write to a USB stick (Rufus: DD Image mode). See README.
           files: |
-            dist/DevOS-1.0-amd64.iso
-            dist/DevOS-1.0-amd64.iso.sha256
+            dist/DevOS-1.1-amd64.iso
+            dist/DevOS-1.1-amd64.iso.sha256

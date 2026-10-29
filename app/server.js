@@ -114,6 +114,42 @@ function walkSearch(q, root) {
   });
 }
 
+// ---- project preview servers: plain static HTTP on 127.0.0.1 so HTML works in any browser ------
+const previews = new Map();   // root dir -> port
+function previewRoot(file) {
+  let d = fs.existsSync(file) && fs.statSync(file).isDirectory() ? file : path.dirname(file);
+  const start = d;
+  for (let i = 0; i < 8; i++) {
+    if (fs.existsSync(path.join(d, '.devos.json')) || fs.existsSync(path.join(d, 'package.json'))) return d;
+    const up = path.dirname(d); if (up === d || up === os.homedir() || up === '/') break; d = up;
+  }
+  return start;
+}
+function previewPort(root) {
+  return new Promise((resolve, reject) => {
+    if (previews.has(root)) return resolve(previews.get(root));
+    if (previews.size >= 8) { reject(new Error('Too many preview servers - restart DevOS')); return; }
+    const srv = http.createServer((req, res) => {
+      try {
+        let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+        let f = path.normalize(path.join(root, p));
+        if (f !== root && !f.startsWith(root + path.sep)) { res.writeHead(403); return res.end('Forbidden'); }
+        if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+        if (!fs.existsSync(f)) { res.writeHead(404, { 'content-type': 'text/plain' }); return res.end('Not found: ' + p); }
+        res.writeHead(200, { 'content-type': mimeOf(f), 'cache-control': 'no-store' });
+        fs.createReadStream(f).pipe(res);
+      } catch (e) { res.writeHead(400); res.end('Bad request'); }
+    });
+    srv.on('error', reject);
+    srv.listen(0, '127.0.0.1', () => { previews.set(root, srv.address().port); resolve(srv.address().port); });
+  });
+}
+async function previewUrl(file) {
+  const f = expand(file); const root = previewRoot(f);
+  const rel = path.relative(root, f).split(path.sep).map(encodeURIComponent).join('/');
+  return `http://127.0.0.1:${await previewPort(root)}/${rel}`;
+}
+
 // ---- API --------------------------------------------------------------------------------
 const api = {
   'GET /api/info': async () => ({
@@ -192,6 +228,9 @@ const api = {
   'POST /api/share/start': async (req) => { const b = await readJson(req); return { shares: sys.shareStart({ ...b, dir: expand(b.dir) }) }; },
   'POST /api/share/stop': async (req) => ({ shares: sys.shareStop((await readJson(req)).port) }),
 
+  'POST /api/preview/url': async (req) => ({ url: await previewUrl((await readJson(req)).path) }),
+  'POST /api/preview/open': async (req) => { const url = await previewUrl((await readJson(req)).path); sys.openExternal(url); return { url }; },
+  'POST /api/app/open': async (req) => { sys.openApp((await readJson(req)).app); return { ok: true }; },
   'POST /api/browser/open': async (req) => { sys.openExternal((await readJson(req)).url); return { ok: true }; },
   'POST /api/keyboard': async (req) => {
     const b = await readJson(req);

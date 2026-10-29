@@ -2,6 +2,9 @@
 // Full-size pages: Custom Maker, Network, USB, Tools, Settings + web preview
 function showPage(name) {
   $('#pageWrap').hidden = !name;
+  const panel = $('#panel');
+  if (name && !D.panelHidden) { D.panelHidden = true; D.panelWasMin = panel.classList.contains('min'); panel.classList.add('min'); }
+  if (!name && D.panelHidden) { D.panelHidden = false; if (!D.panelWasMin) panel.classList.remove('min'); }
   $$('#activity [data-page]').forEach((b) => b.classList.toggle('active', b.dataset.page === name));
 }
 window.showPage = showPage;
@@ -23,6 +26,15 @@ const PAGES = {
     const name = h('input', { value: 'my-project', style: 'width:220px' });
     const parent = h('input', { value: D.cwd, style: 'width:340px' });
     box.append(h('div', { class: 'form' }, ...field('Project name', name), ...field('Create in folder', parent)));
+    const createFrom = async (id) => {
+      try { const r = await POST('/api/maker/create', { template: id, name: name.value, parent: parent.value }); toast(`Created ${r.dir}`, 'ok');
+        D.expanded.add(parent.value); showPage(null);
+        const first = await GET('/api/fs/list?path=' + encodeURIComponent(r.dir)); const f = first.entries.find((e) => !e.dir && !e.name.startsWith('.'));
+        D.expanded.add(r.dir); if (f) D.openFile(join(r.dir, f.name)); D.loadDir(D.cwd);
+      } catch (e) { fail(e); } };
+    const pick = select(templates.map((t) => [t.id, t.name + ' - ' + t.desc]), templates[0].id, () => {});
+    box.append(h('div', { class: 'pickrow' }, h('b', {}, 'Template:'), pick, h('button', { class: 'primary', onclick: () => createFrom(pick.value) }, 'Create project')),
+      h('p', { class: 'muted' }, 'Or click a card below (scroll down with the mouse wheel, the scrollbar on the right, or PageDown):'));
     const cards = h('div', { class: 'cards', style: 'margin-top:12px' });
     templates.forEach((t) => cards.append(h('div', { class: 'card click', onclick: async () => {
       try { const r = await POST('/api/maker/create', { template: t.id, name: name.value, parent: parent.value }); toast(`Created ${r.dir}`, 'ok');
@@ -135,14 +147,23 @@ window.registerCustom = registerCustom;
 
 // ---------------------------------------------------------------------------- web preview / mini browser
 D.previewPath = null;
+// Open a project file in the real system browser (Epiphany). HTML is served by a local preview server.
+D.openInBrowser = async (path) => {
+  if (/\.(md|markdown)$/i.test(path)) return D.preview(path);
+  try {
+    if (D.info.live) { const r = await POST('/api/preview/open', { path }); toast('Opened in browser: ' + r.url, 'ok'); }
+    else { const r = await POST('/api/preview/url', { path }); window.open(r.url, '_blank'); }
+  } catch (e) { fail(e); D.preview(path); }
+};
+// Mini browser pane inside DevOS (for dev servers and project files)
 D.preview = async (target) => {
-  const wrap = $('#previewWrap'); wrap.hidden = false; $('#pageWrap').hidden = true;
+  const wrap = $('#previewWrap'); wrap.hidden = false; showPage(null);
   const frame = $('#pvFrame'), url = $('#pvUrl'); D.previewPath = null;
   if (!target) { frame.src = 'about:blank'; url.value = ''; return; }
   if (/^https?:\/\//i.test(target)) { frame.removeAttribute('srcdoc'); frame.src = target; url.value = target; return; }
   D.previewPath = target; url.value = target;
   if (/\.(md|markdown)$/i.test(target)) { const r = await GET('/api/fs/read?path=' + encodeURIComponent(target)).catch(fail); if (r) frame.srcdoc = renderMd(r.content); return; }
-  frame.removeAttribute('srcdoc'); frame.src = '/raw' + target + '?v=' + Date.now();
+  try { const r = await POST('/api/preview/url', { path: target }); frame.removeAttribute('srcdoc'); frame.src = r.url + (r.url.includes('?') ? '&' : '?') + 'v=' + Date.now(); url.value = r.url; } catch (e) { fail(e); }
 };
 D.reloadPreview = () => { if (D.previewPath) D.preview(D.previewPath); else { const f = $('#pvFrame'); try { f.contentWindow.location.reload(); } catch (_) { f.src = f.src; } } };
 function renderMd(src) {

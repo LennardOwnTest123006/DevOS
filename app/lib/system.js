@@ -109,10 +109,34 @@ async function power(action) {
   if (!r.ok) throw new Error(r.stderr);
 }
 
+// The server runs as a system service; the browser must start inside the user's desktop session,
+// so devos-session saves DISPLAY / XAUTHORITY / DBUS_SESSION_BUS_ADDRESS to ~/.devos/session.env.
+function sessionEnv() {
+  const env = { ...process.env };
+  try {
+    const f = path.join(process.env.DEVOS_DATA || path.join(os.homedir(), '.devos'), 'session.env');
+    for (const line of fs.readFileSync(f, 'utf8').split('\n')) { const m = /^([A-Z_]+)=(.*)$/.exec(line); if (m) env[m[1]] = m[2]; }
+  } catch (_) { /* not in a desktop session */ }
+  if (!env.XDG_RUNTIME_DIR && process.getuid) env.XDG_RUNTIME_DIR = `/run/user/${process.getuid()}`;   // WebKit needs it (a system service has none)
+  env.WEBKIT_DISABLE_COMPOSITING_MODE = '1'; env.WEBKIT_DISABLE_DMABUF_RENDERER = '1';
+  return env;
+}
 function openExternal(url) {
   if (!/^https?:\/\//i.test(url)) throw new Error('Only http(s) URLs');
+  const env = sessionEnv();
+  if (!env.DISPLAY) throw new Error('No desktop session found (open the URL in your own browser)');
   const bin = fs.existsSync('/usr/local/bin/devos-browser') ? '/usr/local/bin/devos-browser' : 'xdg-open';
-  cp.spawn(bin, [url], { detached: true, stdio: 'ignore' }).on('error', () => {}).unref();
+  const log = fs.openSync(path.join(process.env.DEVOS_DATA || os.tmpdir(), 'browser.log'), 'a');
+  cp.spawn(bin, [url], { detached: true, stdio: ['ignore', log, log], env }).on('error', () => {}).unref();
 }
 
-module.exports = { run, usbList, usbMount, usbEject, usbExport, wifiList, wifiConnect, shareStart, shareStop, shareList, power, openExternal, lanAddresses };
+function openApp(name) {
+  const apps = { files: 'devos-files', terminal: 'devos-terminal', browser: 'devos-browser', ide: 'devos-app' };
+  if (!apps[name]) throw new Error('Unknown app');
+  const env = sessionEnv();
+  if (!env.DISPLAY) throw new Error('No desktop session found - this works inside the DevOS ISO');
+  const log = fs.openSync(path.join(process.env.DEVOS_DATA || os.tmpdir(), 'apps.log'), 'a');
+  cp.spawn(apps[name], [], { detached: true, stdio: ['ignore', log, log], env }).on('error', () => {}).unref();
+}
+
+module.exports = { openApp, run, usbList, usbMount, usbEject, usbExport, wifiList, wifiConnect, shareStart, shareStop, shareList, power, openExternal, lanAddresses };

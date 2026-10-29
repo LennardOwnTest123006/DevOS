@@ -8,6 +8,7 @@ function welcome() {
       b('🛠️', 'New project', 'Web, Node, Python, C/C++, Java, Go, Rust …', () => D.page('maker')),
       b('📄', 'New file', 'Empty file in this folder', () => D.newFile()),
       b('⌨️', 'Terminal', 'Full shell (Ctrl+`)', () => D.newTerminal()),
+      b('🗂️', 'File manager', 'Browse all files and USB sticks', () => $('#btnFiles').click()),
       b('🧰', 'Languages & tools', 'What is installed', () => D.page('tools')),
       b('📶', 'Wi-Fi / LAN', 'Connect, share files', () => D.page('network')),
       b('💾', 'USB export', 'Copy projects to a stick', () => D.page('usb')),
@@ -20,8 +21,8 @@ function topMenus() {
   const defs = {
     file: () => [{ label: 'New file…', run: () => D.newFile(), key: '' }, { label: 'New project…', run: () => D.page('maker') }, { label: 'Save', run: () => D.save(), key: 'Ctrl+S' }, { label: 'Save all', run: () => D.saveAll() }, '-',
       { label: 'Open folder…', run: async () => { const p = await ask('Open folder (absolute path)', D.cwd); if (p) D.loadDir(p); } }, { label: 'Export current folder to USB…', run: () => D.page('usb', { src: D.cwd }) },
-      { label: 'Download current file', run: () => D.active && (location.href = '/api/fs/download?path=' + encodeURIComponent(D.active.path)) }, '-', { label: 'Close tab', run: () => D.active && D.closeTab(D.active) }],
-    run: () => [{ label: 'Run current file', run: () => D.run(), key: 'F5' }, { label: 'Open web preview', run: () => D.preview(D.active ? D.active.path : '') }, '-', { label: 'New terminal', run: () => D.newTerminal(), key: 'Ctrl+`' }, { label: 'Clear Run terminal', run: () => D.runTerm && D.runTerm.xt.clear() }],
+      { label: 'Open file manager (graphical)', run: () => POST('/api/app/open', { app: 'files' }).catch(fail) }, { label: 'Download current file', run: () => D.active && (location.href = '/api/fs/download?path=' + encodeURIComponent(D.active.path)) }, '-', { label: 'Close tab', run: () => D.active && D.closeTab(D.active) }],
+    run: () => [{ label: 'Run current file', run: () => D.run(), key: 'F5' }, { label: 'Open in browser', run: () => D.active && D.openInBrowser(D.active.path) }, { label: 'Open web preview pane', run: () => D.preview(D.active ? D.active.path : '') }, '-', { label: 'New terminal', run: () => D.newTerminal(), key: 'Ctrl+`' }, { label: 'Clear Run terminal', run: () => D.runTerm && D.runTerm.xt.clear() }],
     view: () => [{ label: 'Explorer', run: () => setView('files') }, { label: 'Search', run: () => setView('search') }, { label: 'Problems', run: () => showPanel('problems') }, { label: 'Toggle panel', run: () => togglePanel(), key: 'Ctrl+`' }, '-',
       ...[['devos-dark', 'Dark theme'], ['devos-light', 'Light theme'], ['devos-hc', 'High contrast']].map(([v, n]) => ({ label: n, run: () => { D.settings.theme = v; D.applySettings(); PUT('/api/settings', D.settings); } })),
       { label: 'Zoom in', run: () => { D.settings.fontSize++; D.applySettings(); } }, { label: 'Zoom out', run: () => { D.settings.fontSize--; D.applySettings(); } }],
@@ -58,6 +59,7 @@ async function boot() {
   $('#termNew').onclick = () => D.newTerminal(); $('#panelToggle').onclick = togglePanel;
   $('#btnRun').onclick = () => D.run(); $('#btnPower').onclick = () => D.page('settings');
   $('#btnPreview').onclick = () => { const w = $('#previewWrap'); w.hidden ? D.preview(D.active && /\.(html?|md)$/i.test(D.active.path) ? D.active.path : '') : (w.hidden = true); };
+  $('#btnFiles').onclick = () => POST('/api/app/open', { app: 'files' }).catch((e) => { toast('Graphical file manager: ' + e.message + ' - the Explorer on the left works everywhere.', 'err', 6000); });
   $('#pvClose').onclick = () => ($('#previewWrap').hidden = true); $('#pvReload').onclick = () => D.reloadPreview();
   $('#pvBack').onclick = () => { try { $('#pvFrame').contentWindow.history.back(); } catch (_) { /* cross-origin */ } };
   $('#pvFwd').onclick = () => { try { $('#pvFrame').contentWindow.history.forward(); } catch (_) { /* cross-origin */ } };

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # X session: keyboard layout from kernel command line (devos.kb=de), then Openbox.
 export LC_TIME=en_US.UTF-8   # 12-hour clock with AM/PM (tint2, apps)
+# let the DevOS server (a system service) start apps inside this desktop session
+mkdir -p "$HOME/.devos"
+env | grep -E '^(DISPLAY|XAUTHORITY|DBUS_SESSION_BUS_ADDRESS|LC_TIME|XDG_RUNTIME_DIR|XDG_SESSION_ID|XDG_SESSION_TYPE|XDG_SEAT|XDG_VTNR)=' > "$HOME/.devos/session.env"
 kb="$(sed -n 's/.*devos\.kb=\([a-zA-Z_-]*\).*/\1/p' /proc/cmdline)"
 [ -n "$kb" ] && setxkbmap "$kb"
 xset s off -dpms 2>/dev/null

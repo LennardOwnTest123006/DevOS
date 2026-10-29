@@ -7,7 +7,7 @@ HERE="$PWD"; REPO="$(dirname "$HERE")"
 PROFILE="${PROFILE:-full}"          # full | lite (small, for virtual machines)
 if [ "$PROFILE" = lite ]; then WORK="${WORK:-/var/tmp/devos-build-lite}"; PKGS=packages-lite.txt; SUFFIX="-lite"; else WORK="${WORK:-/var/tmp/devos-build}"; PKGS=packages.txt; SUFFIX=""; fi
 OUT="${OUT:-$REPO/dist}"
-VERSION="${DEVOS_VERSION:-1.0}"
+VERSION="${DEVOS_VERSION:-1.1}"
 MIRROR="${MIRROR:-http://archive.ubuntu.com/ubuntu}"
 SUITE=noble
 XZ_LEVEL="${XZ_LEVEL:-xz}"           # use XZ_LEVEL="zstd -Xcompression-level 9" for a faster, bigger build
@@ -86,8 +86,9 @@ chroot "$C" env VERSION="$VERSION" PROFILE="$PROFILE" bash -c '
   set -e
   locale-gen en_US.UTF-8 de_DE.UTF-8 >/dev/null; update-locale LANG=en_US.UTF-8 LC_TIME=en_US.UTF-8
   printf "%s\n" "kernel.apparmor_restrict_unprivileged_userns=0" "kernel.unprivileged_bpf_disabled=1" "net.ipv4.conf.all.rp_filter=1" > /etc/sysctl.d/99-devos.conf
-  systemctl enable devos.service nftables.service NetworkManager.service >/dev/null
+  systemctl enable devos.service nftables.service NetworkManager.service systemd-resolved.service >/dev/null
   systemctl mask apt-daily.timer apt-daily-upgrade.timer motd-news.timer >/dev/null 2>&1 || true
+  dconf update
   echo "DevOS $VERSION" > /etc/devos-release
   sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"DevOS $VERSION (Ubuntu 24.04 base)\"/" /etc/os-release
   if [ "$PROFILE" = lite ]; then
@@ -105,6 +106,8 @@ log "Clean chroot"
 KVER="$(ls "$C/boot" | sed -n 's/^vmlinuz-//p' | sort -V | tail -1)"
 chroot "$C" apt-get clean
 rm -rf "${C:?}"/var/lib/apt/lists/* "${C:?}"/tmp/* "${C:?}"/root/.npm "${C:?}/usr/sbin/policy-rc.d"
+# DNS: use systemd-resolved (never ship the build machine's resolv.conf)
+rm -f "$C/etc/resolv.conf"; ln -s ../run/systemd/resolve/stub-resolv.conf "$C/etc/resolv.conf"
 : > "$C/etc/machine-id"; rm -f "$C/var/lib/dbus/machine-id"
 umount_all
 
