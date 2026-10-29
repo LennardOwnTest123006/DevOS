@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+if [ "${1:-}" = "--short" ]; then
+  printf '\e[1;32m</> DevOS\e[0m  %s  |  devos = open IDE  |  devos-usb = USB tools  |  devos-help = all commands\n' "$(. /etc/os-release; echo "$PRETTY_NAME")"
+  exit 0
+fi
+echo "DevOS live system"
+echo "  kernel : $(uname -r)"
+echo "  cpu    : $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)"
+echo "  ram    : $(free -h | awk '/Mem:/{print $2}')"
+echo "  boot   : $([ -d /sys/firmware/efi ] && echo UEFI || echo BIOS)  secure-boot: $(mokutil --sb-state 2>/dev/null | head -1)"
+echo "  disks  : internal disks are NOT mounted or touched"
+echo "  network: $(hostname -I 2>/dev/null)"
+for t in node python3 gcc g++ java go rustc php ruby lua5.4 perl; do
+  command -v "$t" >/dev/null && printf '  %-8s %s\n' "$t" "$("$t" --version 2>&1 | head -1)"
+done

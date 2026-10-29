@@ -1,0 +1,9 @@
+// Live session: the dev user may manage USB sticks and networking without a password prompt.
+polkit.addRule(function(action, subject) {
+  if (subject.user == "dev" && (action.id.indexOf("org.freedesktop.udisks2.") == 0 ||
+      action.id.indexOf("org.freedesktop.NetworkManager.") == 0 ||
+      action.id == "org.freedesktop.login1.power-off" || action.id == "org.freedesktop.login1.reboot" ||
+      action.id == "org.freedesktop.login1.reboot-to-firmware-setup")) {
+    return polkit.Result.YES;
+  }
+});

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DevOS</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="/css/devos.css">
+<link rel="stylesheet" href="/vendor/xterm/xterm.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand"><span class="logo">&lt;/&gt;</span> DevOS</div>
+    <nav id="menus" aria-label="Menu bar">
+      <button data-menu="file">File</button>
+      <button data-menu="run">Run</button>
+      <button data-menu="view">View</button>
+      <button data-menu="tools">Tools</button>
+    </nav>
+    <div class="spacer"></div>
+    <select id="runLang" title="Run profile for the current file" hidden></select>
+    <button id="btnRun" class="primary" title="Save and run (F5)" aria-label="Run">▶ Run</button>
+    <button id="btnFiles" title="Open the graphical file manager">Files</button>
+    <button id="btnPreview" title="Open web preview / mini browser">Web</button>
+    <button id="btnBrowser" title="Open the full system browser">Browser ↗</button>
+    <button id="btnPower" title="Power" aria-label="Power" hidden>⏻</button>
+  </header>
+
+  <aside id="activity" role="toolbar" aria-label="Sections">
+    <button data-view="files" class="active" title="Files (Ctrl+Shift+E)" aria-label="Files (Ctrl+Shift+E)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+    <button data-view="search" title="Search in files (Ctrl+Shift+F)" aria-label="Search in files (Ctrl+Shift+F)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg></button>
+    <button data-page="maker" title="Custom Maker" aria-label="Custom Maker"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l4 4M4 20l1-4L16 5l3 3L8 19z"/></svg></button>
+    <button data-page="network" title="Network, Wi-Fi, LAN share" aria-label="Network, Wi-Fi, LAN share"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a10 10 0 0 1 14 0M8 15a6 6 0 0 1 8 0"/><circle cx="12" cy="18.5" r="1"/></svg></button>
+    <button data-page="usb" title="USB &amp; export" aria-label="USB and export"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M10 7h4"/></svg></button>
+    <button data-page="tools" title="Installed languages &amp; tools" aria-label="Installed languages and tools"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></svg></button>
+    <div class="spacer"></div>
+    <button data-page="settings" title="Settings" aria-label="Settings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></button>
+  </aside>
+
+  <aside id="sidebar">
+    <section id="view-files">
+      <div class="side-head"><span>EXPLORER</span>
+        <span class="icons"><button id="fNewFile" title="New file" aria-label="New file">+ File</button><button id="fNewDir" title="New folder" aria-label="New folder">+ Folder</button><button id="fUp" title="Parent folder" aria-label="Parent folder">↑</button><button id="fHome" title="Home" aria-label="Home">Home</button><button id="fRefresh" title="Refresh" aria-label="Refresh">⟳</button></span>
+      </div>
+      <div id="crumb" class="crumb"></div>
+      <div id="tree" tabindex="0"></div>
+    </section>
+    <section id="view-search" hidden>
+      <div class="side-head"><span>SEARCH</span></div>
+      <form id="searchForm"><input id="searchQ" placeholder="Search text in current folder…" autocomplete="off"></form>
+      <div id="searchRes"></div>
+    </section>
+  </aside>
+  <div id="resizerV" class="resizer v"></div>
+
+  <main id="center">
+    <div id="tabs"></div>
+    <div id="work">
+      <div id="editorWrap"><div id="editor"></div><div id="welcome"></div></div>
+      <div id="pageWrap" hidden><div id="page"></div></div>
+      <div id="previewWrap" hidden>
+        <div class="pv-bar"><button id="pvBack">◀</button><button id="pvFwd">▶</button><button id="pvReload">⟳</button>
+          <input id="pvUrl" placeholder="http://localhost:3000  or  a file path"><button id="pvOpen" title="Open in system browser">↗</button><button id="pvClose">✕</button></div>
+        <iframe id="pvFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
+      </div>
+    </div>
+    <div id="resizerH" class="resizer h"></div>
+    <div id="panel">
+      <div id="panelTabs">
+        <div id="termTabs"></div>
+        <button id="termNew" title="New terminal" aria-label="New terminal">+</button>
+        <button class="ptab" data-ptab="problems">Problems <span id="problemCount" class="badge">0</span></button>
+        <div class="spacer"></div>
+        <button id="panelToggle" title="Show/hide panel (Ctrl+`)">▾</button>
+      </div>
+      <div id="termHost"></div>
+      <div id="problems" hidden></div>
+    </div>
+  </main>
+
+  <footer id="status">
+    <span id="stLang">plain text</span><span id="stPos">Ln 1, Col 1</span><span id="stCheck"></span>
+    <span class="spacer"></span><span id="stMsg"></span><span id="stSave"></span><span id="stHost"></span>
+  </footer>
+</div>
+<div id="menu" hidden></div>
+<div id="toasts"></div>
+<div id="modal" hidden><div class="modal-box"></div></div>
+
+<script src="/vendor/xterm/xterm.js"></script>
+<script src="/vendor/xterm/addon-fit.js"></script>
+<script src="/vendor/xterm/addon-web-links.js"></script>
+<script src="/vendor/monaco/vs/loader.js"></script>
+<script src="/js/core.js"></script>
+<script src="/js/editor.js"></script>
+<script src="/js/terminal.js"></script>
+<script src="/js/files.js"></script>
+<script src="/js/pages.js"></script>
+<script src="/js/main.js"></script>
+</body>
+</html>

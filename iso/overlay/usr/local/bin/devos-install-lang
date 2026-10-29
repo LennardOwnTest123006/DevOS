@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -e
+case "${1:-}" in
+  kotlin) sudo apt-get update && sudo apt-get install -y kotlin ;;
+  dotnet|csharp) sudo apt-get update && sudo apt-get install -y dotnet-sdk-8.0 ;;
+  r) sudo apt-get update && sudo apt-get install -y r-base-core ;;
+  julia) sudo apt-get update && sudo apt-get install -y julia ;;
+  zig) sudo snap install zig --classic --beta 2>/dev/null || sudo apt-get install -y zig ;;
+  haskell) sudo apt-get update && sudo apt-get install -y ghc cabal-install ;;
+  ocaml) sudo apt-get update && sudo apt-get install -y ocaml opam ;;
+  elixir) sudo apt-get update && sudo apt-get install -y elixir ;;
+  scala) sudo apt-get update && sudo apt-get install -y scala ;;
+  dart) sudo apt-get update && sudo apt-get install -y dart || echo "see https://dart.dev/get-dart" ;;
+  swift) echo "Swift: download the Ubuntu 24.04 toolchain from https://www.swift.org/install/linux/" ;;
+  *) echo "usage: devos-install-lang kotlin|dotnet|r|julia|zig|haskell|ocaml|elixir|scala|dart|swift (needs internet)"; exit 1 ;;
+esac

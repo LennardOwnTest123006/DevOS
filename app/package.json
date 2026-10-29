@@ -1,0 +1,20 @@
+{
+  "name": "devos",
+  "version": "1.0.0",
+  "description": "DevOS - the developer workstation: editor, terminal, runner, maker, settings",
+  "private": true,
+  "license": "Apache-2.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "vendor": "node scripts/vendor.js",
+    "test": "node scripts/selftest.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@xterm/addon-fit": "0.10.0",
+    "@xterm/addon-web-links": "0.11.0",
+    "@xterm/xterm": "5.5.0",
+    "monaco-editor": "0.52.2"
+  }
+}

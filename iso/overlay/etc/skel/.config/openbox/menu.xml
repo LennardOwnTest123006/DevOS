@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+<menu id="root-menu" label="DevOS">
+  <item label="DevOS (IDE)"><action name="Execute"><command>devos-app</command></action></item>
+  <item label="Browser"><action name="Execute"><command>devos-browser</command></action></item>
+  <item label="Files"><action name="Execute"><command>devos-files</command></action></item>
+  <item label="Terminal"><action name="Execute"><command>devos-terminal</command></action></item>
+  <separator/>
+  <item label="Reboot to firmware / boot menu (go back to Windows)"><action name="Execute"><command>devos-menu firmware</command></action></item>
+  <item label="Reboot"><action name="Execute"><command>devos-menu reboot</command></action></item>
+  <item label="Shut down"><action name="Execute"><command>devos-menu poweroff</command></action></item>
+</menu>
+</openbox_menu>

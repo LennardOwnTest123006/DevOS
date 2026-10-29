@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Normal open-source web browser (GNOME Web / Epiphany, WebKit) for the internet, LAN and Wi-Fi pages.
+export WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1
+exec epiphany "$@"

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=DevOS
+Comment=Editor, terminal, runner, maker
+Exec=devos-app
+Icon=/opt/devos/public/favicon.svg
+Categories=Development;

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Browser
+Comment=Open-source web browser
+Exec=devos-browser
+Icon=web-browser
+Categories=Network;WebBrowser;

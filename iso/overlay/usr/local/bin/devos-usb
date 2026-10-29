@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# devos-usb - safe USB helper
+#   devos-usb list
+#   sudo devos-usb flash  FILE.iso /dev/sdX     write an image (ERASES the stick)
+#   sudo devos-usb verify FILE.iso /dev/sdX     check the stick matches the image
+#   devos-usb export DIR                        copy DIR as .tar.gz to the first mounted USB stick
+set -euo pipefail
+red() { printf '\e[1;31m%s\e[0m\n' "$*" >&2; }
+die() { red "ERROR: $*"; exit 1; }
+live_disk() {  # disk the running system booted from
+  local src; src="$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null || findmnt -n -o SOURCE /cdrom 2>/dev/null || true)"
+  [ -n "$src" ] && lsblk -no PKNAME "$src" 2>/dev/null | head -1 | sed 's|^|/dev/|'
+}
+check_dev() {
+  local d="$1"
+  [ -b "$d" ] || die "$d is not a block device"
+  [ "$(lsblk -dno TYPE "$d")" = "disk" ] || die "$d is a partition - give the whole disk (e.g. /dev/sdb, not /dev/sdb1)"
+  [ "$d" != "$(live_disk)" ] || die "$d is the stick DevOS is running from"
+  local rm tran; rm="$(lsblk -dno RM "$d")"; tran="$(lsblk -dno TRAN "$d")"
+  if [ "$rm" != "1" ] && [ "$tran" != "usb" ]; then
+    red "$d does NOT look like a USB stick (removable=$rm, transport=$tran) - it may be an internal disk!"
+    [ "${DEVOS_USB_ALLOW_INTERNAL:-}" = "1" ] || die "refusing. (If you are 100% sure: DEVOS_USB_ALLOW_INTERNAL=1)"
+  fi
+  if lsblk -rno MOUNTPOINT "$d" | grep -q '^/$\|^/home\|^/boot'; then die "$d holds the running system"; fi
+}
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  list) lsblk -o NAME,SIZE,TYPE,RM,TRAN,MODEL,LABEL,MOUNTPOINT | sed 's/^/  /' ;;
+  flash)
+    iso="${1:-}"; dev="${2:-}"; [ -f "$iso" ] && [ -n "$dev" ] || die "usage: sudo devos-usb flash FILE.iso /dev/sdX"
+    [ "$(id -u)" = 0 ] || die "run with sudo"
+    check_dev "$dev"
+    if [ -f "$iso.sha256" ]; then (cd "$(dirname "$iso")" && sha256sum -c "$(basename "$iso").sha256") || die "checksum mismatch - ISO is damaged"; fi
+    lsblk -o NAME,SIZE,MODEL,LABEL,MOUNTPOINT "$dev"
+    red "ALL DATA ON $dev WILL BE ERASED."
+    read -rp "Type the device path again to confirm ($dev): " c; [ "$c" = "$dev" ] || die "not confirmed"
+    umount "$dev"* 2>/dev/null || true
+    dd if="$iso" of="$dev" bs=4M conv=fsync status=progress; sync
+    echo "Done. Verify with: sudo devos-usb verify $iso $dev" ;;
+  verify)
+    iso="${1:-}"; dev="${2:-}"; [ -f "$iso" ] && [ -b "$dev" ] || die "usage: devos-usb verify FILE.iso /dev/sdX"
+    size="$(stat -c %s "$iso")"
+    cmp -n "$size" "$iso" "$dev" && echo "OK: stick matches $iso" || die "MISMATCH - flash again" ;;
+  export)
+    src="${1:-}"; [ -d "$src" ] || die "usage: devos-usb export DIR"
+    mp="$(lsblk -rno MOUNTPOINT,RM,HOTPLUG | awk '$1!="" && ($2==1||$3==1){print $1; exit}')"
+    [ -n "$mp" ] || die "no mounted USB stick (plug it in, then: udisksctl mount -b /dev/sdX1)"
+    mkdir -p "$mp/DevOS-export"; out="$mp/DevOS-export/$(basename "$(realpath "$src")")-$(date +%F-%H%M%S).tar.gz"
+    tar -czf "$out" -C "$(dirname "$(realpath "$src")")" "$(basename "$(realpath "$src")")"; sync; echo "Wrote $out" ;;
+  *) sed -n '2,6p' "$0" ;;
+esac

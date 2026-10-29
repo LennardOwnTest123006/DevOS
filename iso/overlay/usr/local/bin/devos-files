@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Graphical file manager (PCManFM): browse all files, open USB sticks (click them in the left list).
+exec pcmanfm "${@:-$HOME}"
